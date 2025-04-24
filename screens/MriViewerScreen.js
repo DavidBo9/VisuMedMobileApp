@@ -35,6 +35,40 @@ const MriViewerScreen = ({ navigation }) => {
     // For this demo, we're just changing the active tab
   };
 
+  const toggleMenu = () => {
+    if (!menuVisible) {
+      setMenuVisible(true);
+      Animated.parallel([
+        Animated.spring(menuAnimation, {
+          toValue: 1,
+          friction: 7,
+          tension: 70,
+          useNativeDriver: true,
+        }),
+        Animated.timing(buttonRotation, {
+          toValue: 1,
+          duration: 250,
+          useNativeDriver: true,
+        })
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(menuAnimation, {
+          toValue: 0,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(buttonRotation, {
+          toValue: 0,
+          duration: 250,
+          useNativeDriver: true,
+        })
+      ]).start(() => {
+        setMenuVisible(false);
+      });
+    }
+  };
+  
   // Handle close button press
   const handleClose = () => {
     // In a real app, you might want to go back or close the viewer
@@ -45,7 +79,13 @@ const MriViewerScreen = ({ navigation }) => {
 
   // Handle chat button press
   const handleChatPress = () => {
-    setShowChat(true);
+    // Primero cerramos el menú sin pasar callback
+    toggleMenu();
+    
+    // Esperamos a que la animación termine antes de abrir el chat
+    setTimeout(() => {
+      setShowChat(true);
+    }, 300);
   };
 
   // Handle viewable items changed
@@ -100,17 +140,18 @@ const MriViewerScreen = ({ navigation }) => {
       />
 
       {/* Chat modal */}
-      <Modal
-        visible={showChat}
-        animationType="slide"
-        transparent={false}
-        onRequestClose={() => setShowChat(false)}
-      >
-        <ChatScreen 
-          currentMriType={mriSequences[activeIndex].type}
-          onClose={() => setShowChat(false)}
-        />
-      </Modal>
+      <Modal 
+  visible={showChat} 
+  animationType="slide"
+  onRequestClose={() => setShowChat(false)}
+>
+  {showChat && (
+    <ChatScreen 
+      currentMriType={currentMriType}
+      onClose={() => setShowChat(false)}
+    />
+  )}
+</Modal>
     </View>
   );
 };
